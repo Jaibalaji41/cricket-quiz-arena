@@ -17,11 +17,21 @@ class QuestionListView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        questions = list(Question.objects.all())
-        if len(questions) > 10:
-            questions = random.sample(questions, 10)
+        category = request.query_params.get('category')
+        difficulty = request.query_params.get('difficulty')
+        questions = Question.objects.all()
+        if category:
+            questions = questions.filter(category=category)
+        if difficulty:
+            questions = questions.filter(difficulty=difficulty)
+            
+        questions = list(questions)
+        # Select random subset (exactly 6 questions)
+        if len(questions) > 6:
+            questions = random.sample(questions, 6)
         else:
             random.shuffle(questions)
+        
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data)
 

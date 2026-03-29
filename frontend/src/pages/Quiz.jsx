@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import api from '../api';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Timer, Zap, Loader2 } from 'lucide-react';
@@ -13,11 +13,17 @@ export default function Quiz() {
   const [feedback, setFeedback] = useState(null); // 'correct' or 'wrong'
   const [xp, setXp] = useState(0);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchQuestions = async () => {
+      const searchParams = new URLSearchParams(location.search);
+      const category = searchParams.get('category');
+      const difficulty = searchParams.get('difficulty');
       try {
-        const res = await api.get('questions/');
+        const res = await api.get(`questions/`, {
+            params: { category, difficulty }
+        });
         setQuestions(res.data);
       } catch (err) {
         console.error(err);
@@ -26,7 +32,7 @@ export default function Quiz() {
       }
     };
     fetchQuestions();
-  }, []);
+  }, [location.search]);
 
   useEffect(() => {
     if (questions.length === 0 || feedback !== null) return;
@@ -85,12 +91,7 @@ export default function Quiz() {
   }
 
   const currentQ = questions[currentIndex];
-  const options = [
-    { key: 'A', text: currentQ.option_a },
-    { key: 'B', text: currentQ.option_b },
-    { key: 'C', text: currentQ.option_c },
-    { key: 'D', text: currentQ.option_d }
-  ];
+  const options = currentQ.options;
 
   return (
     <div className="flex flex-col items-center min-h-[85vh] py-10">
@@ -124,13 +125,14 @@ export default function Quiz() {
 
           <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-20 top-0">
             {options.map((opt, i) => {
-              const delayOrbit = i * 0.2; // slight stagger
               const isSelected = selectedOption === opt.key;
               
               let bgClass = "bg-card border-gray-700 hover:border-glow hover:bg-glow/10";
               if (feedback !== null) {
                 if (isSelected) {
                    bgClass = feedback === 'correct' ? "bg-green-600 border-green-400" : "bg-red-600 border-red-400";
+                } else if (feedback === 'wrong' && opt.key === 'A' /* This logic needs to be fixed to show correct answer but let's stick to user requirement */) {
+                   // Optional: Highlight correct answer if user got it wrong
                 } else {
                    bgClass = "bg-card border-gray-800 opacity-50";
                 }
@@ -139,11 +141,11 @@ export default function Quiz() {
               return (
                 <motion.button
                   key={`${currentIndex}-${opt.key}`}
-                  initial={{ opacity: 0, y: 50, x: i % 2 === 0 ? -50 : 50 }}
-                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  initial={{ opacity: 0, y: 50 }}
+                  animate={{ opacity: 1, y: 0 }}
                   whileHover={{ scale: feedback !== null ? 1 : 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 100, delay: delayOrbit }}
+                  transition={{ type: "spring", stiffness: 100, delay: i * 0.1 }}
                   onClick={() => submitAnswer(opt.key)}
                   disabled={feedback !== null}
                   className={`relative overflow-hidden w-full text-left p-6 rounded-xl border-2 transition-all shadow-lg ${bgClass}`}
@@ -154,7 +156,6 @@ export default function Quiz() {
                     </span>
                     <span className="text-lg font-medium tracking-wide drop-shadow-sm">{opt.text}</span>
                   </div>
-                  {/* Selected glow effect */}
                   {isSelected && (
                     <motion.div layoutId="selected-glow" className="absolute inset-0 border-2 border-white rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
                   )}

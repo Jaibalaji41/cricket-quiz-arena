@@ -20,6 +20,12 @@ class Question(models.Model):
         ('Hard', 'Hard'),
     ]
 
+    CATEGORY_CHOICES = [
+        ('IPL', 'IPL'),
+        ('World Cup', 'World Cup'),
+        ('Player', 'Player'),
+    ]
+
     text = models.TextField()
     option_a = models.CharField(max_length=200)
     option_b = models.CharField(max_length=200)
@@ -27,7 +33,7 @@ class Question(models.Model):
     option_d = models.CharField(max_length=200)
     correct_answer = models.CharField(max_length=1, choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')])
     difficulty = models.CharField(max_length=10, choices=DIFFICULTY_CHOICES, default='Easy')
-    category = models.CharField(max_length=50, default='General')
+    category = models.CharField(max_length=50, choices=CATEGORY_CHOICES, default='IPL')
 
     def __str__(self):
         return self.text

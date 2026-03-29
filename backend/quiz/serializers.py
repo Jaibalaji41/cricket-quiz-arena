@@ -21,10 +21,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         Leaderboard.objects.create(user=user, score=0)
         return user
 
+import random
+
 class QuestionSerializer(serializers.ModelSerializer):
+    options = serializers.SerializerMethodField()
+
     class Meta:
         model = Question
-        fields = ['id', 'text', 'option_a', 'option_b', 'option_c', 'option_d', 'difficulty', 'category']
+        fields = ['id', 'text', 'difficulty', 'category', 'options']
+        
+    def get_options(self, obj):
+        options = [
+            {'key': 'A', 'text': obj.option_a},
+            {'key': 'B', 'text': obj.option_b},
+            {'key': 'C', 'text': obj.option_c},
+            {'key': 'D', 'text': obj.option_d},
+        ]
+        random.shuffle(options)
+        return options
 
 class submitAttemptSerializer(serializers.Serializer):
     question_id = serializers.IntegerField()

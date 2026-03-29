@@ -1,10 +1,26 @@
-import React from 'react';
-import { motion } from 'framer-motion';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { PlayCircle } from 'lucide-react';
 
-export default function Home({ isAuthenticated }) {
+export default function Home({ isAuthenticated, setActiveCategory }) {
   const navigate = useNavigate();
+  const [selectedCategory, setSelectedCategory] = useState(null);
+
+  const selectCategory = (catId) => {
+    setSelectedCategory(catId);
+    setActiveCategory(catId);
+  };
+
+  const startQuiz = (difficulty) => {
+    if (!isAuthenticated) return navigate('/login');
+    navigate(`/quiz?category=${selectedCategory}&difficulty=${difficulty}`);
+  };
+
+  const goBack = () => {
+    setSelectedCategory(null);
+    setActiveCategory(null);
+  };
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[80vh] text-center relative">
@@ -25,15 +41,68 @@ export default function Home({ isAuthenticated }) {
           Defy gravity with your cricket knowledge. Answer faster, earn more XP, and conquer the leaderboard!
         </p>
         
-        <motion.button 
-          whileHover={{ scale: 1.1, boxShadow: '0 0 20px rgba(31, 182, 255, 0.6)' }}
-          whileTap={{ scale: 0.95 }}
-          onClick={() => navigate(isAuthenticated ? '/quiz' : '/login')}
-          className="flex items-center gap-2 mx-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full text-2xl font-bold transition-all relative group overflow-hidden"
-        >
-          <span className="absolute inset-0 bg-white/20 group-hover:w-full w-0 transition-all duration-300 z-0"></span>
-          <span className="relative z-10 flex items-center gap-2"><PlayCircle className="w-8 h-8"/> Start Match</span>
-        </motion.button>
+        <AnimatePresence mode="wait">
+          {!selectedCategory ? (
+            <motion.div 
+              key="categories"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="flex flex-wrap justify-center gap-4 mt-10"
+            >
+              {[
+                { id: 'IPL', label: 'IPL Quiz', color: 'from-blue-600 to-indigo-600' },
+                { id: 'World Cup', label: 'World Cup Quiz', color: 'from-purple-600 to-pink-600' },
+                { id: 'Player', label: 'Player Quiz', color: 'from-orange-600 to-red-600' }
+              ].map((cat) => (
+                <motion.button 
+                  key={cat.id}
+                  whileHover={{ scale: 1.05, boxShadow: '0 0 20px rgba(31, 182, 255, 0.4)' }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => selectCategory(cat.id)}
+                  className={`flex items-center gap-2 px-8 py-4 bg-gradient-to-r ${cat.color} rounded-xl text-xl font-bold transition-all relative group overflow-hidden shadow-lg`}
+                >
+                  <span className="relative z-10 flex items-center gap-2">
+                    <PlayCircle className="w-6 h-6"/> {cat.label}
+                  </span>
+                </motion.button>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div 
+              key="difficulty"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="flex flex-col items-center gap-6"
+            >
+              <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-accent to-glow">Select Difficulty Level</h2>
+              <div className="flex flex-wrap justify-center gap-4">
+                {[
+                  { level: 'Easy', color: 'from-green-500 to-emerald-600' },
+                  { level: 'Medium', color: 'from-yellow-400 to-orange-500' },
+                  { level: 'Hard', color: 'from-red-600 to-rose-700' }
+                ].map((diff) => (
+                  <motion.button
+                    key={diff.level}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => startQuiz(diff.level)}
+                    className={`px-8 py-3 bg-gradient-to-r ${diff.color} rounded-lg text-lg font-bold shadow-lg`}
+                  >
+                    {diff.level}
+                  </motion.button>
+                ))}
+              </div>
+              <button 
+                onClick={goBack}
+                className="text-gray-400 hover:text-white mt-4 underline decoration-dashed underline-offset-4"
+              >
+                ← Back to Categories
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
     </div>
   );

@@ -37,7 +37,6 @@ class QuestionSerializer(serializers.ModelSerializer):
             {'key': 'C', 'text': obj.option_c},
             {'key': 'D', 'text': obj.option_d},
         ]
-        random.shuffle(options)
         return options
 
 class submitAttemptSerializer(serializers.Serializer):

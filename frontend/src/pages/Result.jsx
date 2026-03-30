@@ -30,7 +30,7 @@ export default function Result() {
 
         <div className="flex justify-center gap-6">
           <button 
-            onClick={() => navigate('/quiz')}
+            onClick={() => navigate(`/quiz${location.search}`)}
             className="flex items-center gap-2 px-6 py-3 bg-space/80 border border-glow text-white rounded-full hover:bg-glow hover:text-black font-bold transition-all"
           >
             <RefreshCcw className="w-5 h-5" /> Play Again

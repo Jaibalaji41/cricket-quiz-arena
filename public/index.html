@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cricket Quiz Game</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Cricket Quiz Game</h1>
+            <div class="score-container" id="score-display">Score: 0</div>
+        </header>
+
+        <main id="game-container">
+            <div id="quiz-screen">
+                <div class="progress-bar">
+                    <div id="progress" class="progress"></div>
+                </div>
+                <div class="question-container">
+                    <h2 id="question">Loading question...</h2>
+                </div>
+                <div class="options-container" id="options">
+                    <!-- Options will be injected here -->
+                </div>
+                <div class="feedback" id="feedback"></div>
+                <button id="next-btn" class="hidden">Next Question</button>
+            </div>
+
+            <div id="result-screen" class="hidden">
+                <h2>Game Over!</h2>
+                <div class="final-score-area">
+                    <p>Your Final Score:</p>
+                    <span id="final-score">0</span>
+                </div>
+                <p id="result-message"></p>
+                <button id="restart-btn">Restart Quiz</button>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

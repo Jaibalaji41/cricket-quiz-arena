@@ -50,12 +50,14 @@ export default function Quiz() {
   }, [currentIndex, questions, feedback]);
 
   const handleTimeOut = () => {
+    if (feedback !== null) return;
     setFeedback('wrong');
+    setCorrectKey(questions[currentIndex].correct_answer);
     setTimeout(nextQuestion, 2000);
   };
 
   const submitAnswer = async (ans) => {
-    if (feedback !== null) return; // prevent multiple clicks
+    if (feedback !== null) return;
     setSelectedOption(ans);
     try {
       const res = await api.post('submit/', {
@@ -65,17 +67,21 @@ export default function Quiz() {
       setFeedback(res.data.is_correct ? 'correct' : 'wrong');
       setCorrectKey(res.data.correct_answer);
       if (res.data.is_correct) {
-        setXp(res.data.new_xp);
+        setXp(pv => pv + 10); // Standard gain
       }
       setTimeout(nextQuestion, 2000);
     } catch (err) {
       console.error(err);
+      // Even on error, show the correct answer if we have it locally?
+      setFeedback('wrong');
+      setTimeout(nextQuestion, 2000);
     }
   };
 
   const nextQuestion = () => {
     if (currentIndex + 1 >= questions.length) {
-      navigate('/result', { state: { xp } });
+      // Pass the query params to the result page so they can "Play Again" with same setup
+      navigate(`/result${location.search}`, { state: { xp } });
     } else {
       setSelectedOption(null);
       setFeedback(null);
@@ -86,15 +92,31 @@ export default function Quiz() {
   };
 
   if (loading) {
-    return <div className="flex justify-center items-center h-[80vh]"><Loader2 className="w-12 h-12 animate-spin text-glow" /></div>;
+    return (
+      <div className="flex flex-col justify-center items-center h-[80vh] gap-4">
+        <Loader2 className="w-12 h-12 animate-spin text-glow" />
+        <span className="text-xl font-bold animate-pulse">Launching AI Quiz...</span>
+      </div>
+    );
   }
 
-  if (!questions.length) {
-    return <div className="text-center mt-20">No questions available. Try again later.</div>;
+  if (!questions || questions.length === 0) {
+    return (
+      <div className="text-center mt-20 flex flex-col items-center gap-6">
+        <h2 className="text-3xl font-bold text-red-500">Wait, something went wrong!</h2>
+        <p className="text-gray-400 max-w-md">Gemini couldn't land its questions. Please check your API key or category selection.</p>
+        <button 
+          onClick={() => navigate('/')} 
+          className="px-8 py-3 bg-glow/20 border border-glow text-glow rounded-xl hover:bg-glow/40 transition-all font-bold"
+        >
+          Go Back Home
+        </button>
+      </div>
+    );
   }
 
-  const currentQ = questions[currentIndex];
-  const options = currentQ.options;
+  const currentQ = questions[currentIndex] || {};
+  const options = currentQ.options || [];
 
   return (
     <div className="flex flex-col items-center min-h-[85vh] py-10">
@@ -133,7 +155,7 @@ export default function Quiz() {
             </motion.div>
 
             <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-20 top-0">
-              {options.map((opt, i) => {
+              {[...options].sort((a, b) => a.key.localeCompare(b.key)).map((opt, i) => {
                 const isSelected = selectedOption === opt.key;
                 
                 let bgClass = "bg-card border-gray-700 hover:border-glow hover:bg-glow/10";

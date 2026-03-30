@@ -7,6 +7,8 @@ from .serializers import (UserSerializer, RegisterSerializer,
                           QuestionSerializer, submitAttemptSerializer, 
                           LeaderboardSerializer)
 import random
+from .services import generate_cricket_questions
+
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()
@@ -17,18 +19,21 @@ class QuestionListView(APIView):
     permission_classes = (IsAuthenticated,)
 
     def get(self, request):
-        category = request.query_params.get('category')
-        difficulty = request.query_params.get('difficulty')
+        category = request.query_params.get('category', 'General')
+        difficulty = request.query_params.get('difficulty', 'Medium')
+        
+        # Robust local database fetch
         questions = Question.objects.all()
-        if category:
+        if category and category != 'General':
             questions = questions.filter(category=category)
         if difficulty:
             questions = questions.filter(difficulty=difficulty)
             
         questions = list(questions)
-        # Select random subset (exactly 6 questions)
-        if len(questions) > 6:
-            questions = random.sample(questions, 6)
+        
+        # Provide a longer 10-question quiz session instead of 6
+        if len(questions) > 10:
+            questions = random.sample(questions, 10)
         else:
             random.shuffle(questions)
         

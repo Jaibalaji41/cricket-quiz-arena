@@ -11,6 +11,7 @@ export default function Quiz() {
   const [timeLeft, setTimeLeft] = useState(15);
   const [selectedOption, setSelectedOption] = useState(null);
   const [feedback, setFeedback] = useState(null); // 'correct' or 'wrong'
+  const [correctKey, setCorrectKey] = useState(null);
   const [xp, setXp] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,6 +63,7 @@ export default function Quiz() {
         selected_answer: ans
       });
       setFeedback(res.data.is_correct ? 'correct' : 'wrong');
+      setCorrectKey(res.data.correct_answer);
       if (res.data.is_correct) {
         setXp(res.data.new_xp);
       }
@@ -77,6 +79,7 @@ export default function Quiz() {
     } else {
       setSelectedOption(null);
       setFeedback(null);
+      setCorrectKey(null);
       setTimeLeft(15);
       setCurrentIndex(prev => prev + 1);
     }
@@ -106,63 +109,68 @@ export default function Quiz() {
 
       <div className="relative w-full max-w-3xl flex flex-col items-center justify-center min-h-[500px]">
         {/* Floating Question Card */}
-        <AnimatePresence mode="popLayout">
+        <AnimatePresence mode="wait">
           <motion.div
-            key={currentIndex}
-            initial={{ scale: 0, opacity: 0, rotate: -10 }}
-            animate={{ scale: 1, opacity: 1, rotate: 0, y: [0, -10, 0] }}
-            exit={{ scale: 0, opacity: 0, rotate: 10 }}
-            transition={{ duration: 0.5, y: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
-            className={`glass-card p-10 text-center w-full shadow-[0_0_30px_rgba(31,182,255,0.2)] z-10 
-              ${feedback === 'correct' ? 'border-green-500 shadow-green-500/50' : ''}
-              ${feedback === 'wrong' ? 'border-red-500 shadow-red-500/50' : ''}`}
+            key={`content-${currentIndex}`}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.4 }}
+            className="w-full flex flex-col items-center"
           >
-            <span className="text-sm font-bold tracking-widest text-glow uppercase block mb-3">
-              {currentQ.category} • {currentQ.difficulty}
-            </span>
-            <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">{currentQ.text}</h2>
-          </motion.div>
+            {/* Floating Question Card */}
+            <motion.div
+              animate={{ y: [0, -10, 0] }}
+              transition={{ y: { repeat: Infinity, duration: 4, ease: "easeInOut" } }}
+              className={`glass-card p-10 text-center w-full shadow-[0_0_30px_rgba(31,182,255,0.2)] z-10 
+                ${feedback === 'correct' ? 'border-green-500 shadow-green-500/50' : ''}
+                ${feedback === 'wrong' ? 'border-red-500 shadow-red-500/50' : ''}`}
+            >
+              <span className="text-sm font-bold tracking-widest text-glow uppercase block mb-3">
+                {currentQ.category} • {currentQ.difficulty}
+              </span>
+              <h2 className="text-3xl font-bold leading-tight drop-shadow-lg">{currentQ.text}</h2>
+            </motion.div>
 
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-20 top-0">
-            {options.map((opt, i) => {
-              const isSelected = selectedOption === opt.key;
-              
-              let bgClass = "bg-card border-gray-700 hover:border-glow hover:bg-glow/10";
-              if (feedback !== null) {
-                if (isSelected) {
-                   bgClass = feedback === 'correct' ? "bg-green-600 border-green-400" : "bg-red-600 border-red-400";
-                } else if (feedback === 'wrong' && opt.key === 'A' /* This logic needs to be fixed to show correct answer but let's stick to user requirement */) {
-                   // Optional: Highlight correct answer if user got it wrong
-                } else {
-                   bgClass = "bg-card border-gray-800 opacity-50";
+            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 w-full relative z-20 top-0">
+              {options.map((opt, i) => {
+                const isSelected = selectedOption === opt.key;
+                
+                let bgClass = "bg-card border-gray-700 hover:border-glow hover:bg-glow/10";
+                if (feedback !== null) {
+                  if (opt.key === correctKey) {
+                     bgClass = "bg-green-600 border-green-400 text-white shadow-[0_0_15px_rgba(74,222,128,0.5)]";
+                  } else if (isSelected && feedback === 'wrong') {
+                     bgClass = "bg-red-600 border-red-400 text-white shadow-[0_0_15px_rgba(248,113,113,0.5)]";
+                  } else {
+                     bgClass = "bg-card border-gray-800 opacity-40 scale-95";
+                  }
                 }
-              }
 
-              return (
-                <motion.button
-                  key={`${currentIndex}-${opt.key}`}
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  whileHover={{ scale: feedback !== null ? 1 : 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 100, delay: i * 0.1 }}
-                  onClick={() => submitAnswer(opt.key)}
-                  disabled={feedback !== null}
-                  className={`relative overflow-hidden w-full text-left p-6 rounded-xl border-2 transition-all shadow-lg ${bgClass}`}
-                >
-                  <div className="flex items-center gap-4">
-                    <span className="w-10 h-10 flex items-center justify-center font-bold text-xl bg-space rounded-full border border-gray-600 shadow-inner">
-                      {opt.key}
-                    </span>
-                    <span className="text-lg font-medium tracking-wide drop-shadow-sm">{opt.text}</span>
-                  </div>
-                  {isSelected && (
-                    <motion.div layoutId="selected-glow" className="absolute inset-0 border-2 border-white rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
-                  )}
-                </motion.button>
-              );
-            })}
-          </div>
+                return (
+                  <motion.button
+                    key={`${currentIndex}-${opt.key}`}
+                    whileHover={{ scale: feedback !== null ? 1 : 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    transition={{ type: "spring", stiffness: 100 }}
+                    onClick={() => submitAnswer(opt.key)}
+                    disabled={feedback !== null}
+                    className={`relative overflow-hidden w-full text-left p-6 rounded-xl border-2 transition-all shadow-lg ${bgClass}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      <span className="w-10 h-10 flex items-center justify-center font-bold text-xl bg-space rounded-full border border-gray-600 shadow-inner">
+                        {opt.key}
+                      </span>
+                      <span className="text-lg font-medium tracking-wide drop-shadow-sm">{opt.text}</span>
+                    </div>
+                    {isSelected && (
+                      <motion.div layoutId="selected-glow" className="absolute inset-0 border-2 border-white rounded-xl shadow-[0_0_20px_rgba(255,255,255,0.8)]" />
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+          </motion.div>
         </AnimatePresence>
       </div>
     </div>
